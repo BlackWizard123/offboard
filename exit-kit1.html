@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Exit Kit — Departure Board &amp; Document Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  /* ===== GLOBAL RESET & GOOGLE-THEMED TOKENS (forced light) ===== */
+  :root {
+    box-sizing: border-box;
+    --bg: #F8F9FA;
+    --surface: #FFFFFF;
+    --surface-2: #F1F3F4;
+    --ink: #202124;
+    --muted: #5F6368;
+    --border: #DADCE0;
+    --blue: #1A73E8;
+    --blue-soft: #E8F0FE;
+    --red: #D93025;
+    --red-soft: #FCE8E6;
+    --yellow: #F9AB00;
+    --yellow-soft: #FEF7E0;
+    --green: #188038;
+    --green-soft: #E6F4EA;
+    --shadow-1: 0 1px 2px 0 rgba(60,64,67,0.30), 0 1px 3px 1px rgba(60,64,67,0.15);
+    --shadow-2: 0 1px 3px 0 rgba(60,64,67,0.30), 0 4px 8px 3px rgba(60,64,67,0.15);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: calc(52px + env(safe-area-inset-top, 0px)); }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Roboto', system-ui, sans-serif;
+  }
+  button { font-family: inherit; }
+  a { color: var(--blue); }
+  code {
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    word-break: break-word;
+    font-family: 'Roboto Mono', monospace;
+  }
+
+  /* ===== TOP NAV (Material top-app-bar tabs) ===== */
+  .kit-nav {
+    position: sticky;
+    top: 0;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 30;
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    padding: 0 8px;
+    padding-top: env(safe-area-inset-top, 0px);
+    box-shadow: var(--shadow-1);
+  }
+  .kit-tab {
+    flex: 1;
+    text-align: center;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--muted);
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    padding: 14px 8px 12px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .kit-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .kit-tab:hover { color: var(--ink); }
+  .kit-tab.active:hover { color: var(--blue); }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .display { font-family: 'Roboto', system-ui, sans-serif; font-weight: 700; }
+
+  /* ===== Shared header shell ===== */
+  #page-board header.board,
+  #page-vault header {
+    position: sticky;
+    top: 52px;
+    top: calc(52px + env(safe-area-inset-top, 0px));
+    z-index: 20;
+    background: var(--surface);
+    padding: 16px 16px 14px;
+    box-shadow: var(--shadow-1);
+  }
+  #page-board .board-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; max-width: 760px; margin: 0 auto; }
+  .brand-row { display: flex; align-items: center; gap: 12px; }
+  .brand-logo { height: 32px; width: auto; max-width: 140px; object-fit: contain; flex-shrink: 0; }
+  #page-board .board-title {
+    font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--blue); margin: 0 0 4px 0; font-weight: 700;
+  }
+  #page-board .board-sub { margin: 0; font-size: 13.5px; color: var(--muted); }
+  #page-board .board-sub strong { color: var(--ink); }
+  #page-board .countdown { text-align: right; flex-shrink: 0; }
+  #page-board .countdown .num {
+    font-weight: 700; font-size: 32px; line-height: 1;
+    color: var(--blue); font-variant-numeric: tabular-nums;
+  }
+  #page-board .countdown .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  #page-vault .head-inner { max-width: 760px; margin: 0 auto; }
+  #page-vault .eyebrow {
+    font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--red); font-weight: 700; margin: 0 0 4px;
+  }
+  #page-vault h1.title { margin: 0 0 4px; font-size: 22px; font-weight: 700; }
+  #page-vault .subtitle { margin: 0; font-size: 13.5px; color: var(--muted); }
+
+  .progress-wrap { max-width: 760px; margin: 12px auto 0; }
+  .progress-track {
+    height: 6px; background: var(--surface-2); border-radius: 4px; overflow: hidden;
+  }
+  #page-board .progress-fill { height: 100%; background: var(--blue); width: 0%; transition: width 0.4s ease; }
+  #page-vault .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.4s ease; }
+  .progress-text { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  .intro {
+    background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--blue);
+    border-radius: 8px; padding: 14px 16px; margin-bottom: 26px; font-size: 14px; color: var(--muted);
+    box-shadow: var(--shadow-1);
+  }
+  #page-vault .intro { border-left-color: var(--red); }
+  .intro strong { color: var(--ink); }
+
+  /* ===== Page 1: timeline ===== */
+  #page-board .timeline { position: relative; padding-left: 26px; }
+  #page-board .timeline::before {
+    content: ""; position: absolute; left: 8px; top: 6px; bottom: 6px; width: 2px; background: var(--border);
+  }
+  #page-board .stop { position: relative; margin-bottom: 30px; }
+  #page-board .stop::before {
+    content: ""; position: absolute; left: -26px; top: 4px; width: 14px; height: 14px;
+    border-radius: 50%; background: var(--surface); border: 3px solid var(--border);
+  }
+  #page-board .stop.urgent::before { border-color: var(--red); }
+  #page-board .stop-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 3px; }
+  #page-board .date-badge {
+    display: inline-block; font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 20px;
+    background: var(--blue-soft); color: var(--blue); white-space: nowrap;
+  }
+  #page-board .stop-title { font-weight: 700; font-size: 18px; margin: 0; }
+  #page-board .stop-note { font-size: 13px; color: var(--muted); margin: 4px 0 12px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; box-shadow: var(--shadow-1);
+  }
+  .item { display: flex; gap: 12px; padding: 13px 14px; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .item:last-child { border-bottom: none; }
+  .item input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none;
+    width: 20px; height: 20px; min-width: 20px;
+    border: 2px solid #8A9099; border-radius: 4px;
+    margin-top: 2px; cursor: pointer; background: var(--surface-2); position: relative;
+  }
+  #page-board .item input[type="checkbox"]:checked { background: var(--blue); border-color: var(--blue); }
+  #page-vault .item input[type="checkbox"]:checked { background: var(--green); border-color: var(--green); }
+  .item input[type="checkbox"]:checked::after {
+    content: ""; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px;
+    border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg);
+  }
+  .item-body { flex: 1; min-width: 0; }
+  .item-title { font-size: 14.5px; font-weight: 500; margin: 0 0 3px; }
+  .item.checked .item-title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--border); }
+  .item-detail { font-size: 13px; color: var(--muted); margin: 0; }
+  #page-vault .item-detail { margin: 5px 0 0; }
+
+  .flag, .tag {
+    display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px; white-space: nowrap; letter-spacing: 0.02em; vertical-align: middle;
+    margin-left: 6px;
+  }
+  .flag.verify, .tag.watch { background: var(--red-soft); color: var(--red); }
+  .tag.source { background: var(--blue-soft); color: var(--blue); }
+  .tag.timing { background: var(--yellow-soft); color: #7A5B00; }
+
+  #page-board .ref-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  @media (min-width: 520px) { #page-board .ref-grid { grid-template-columns: 1fr 1fr; } }
+  #page-board .ref-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; box-shadow: var(--shadow-1); }
+  #page-board .ref-card h4 { margin: 0 0 6px; font-size: 13.5px; font-weight: 700; }
+  #page-board .ref-card p, #page-board .ref-card a { font-size: 12.5px; color: var(--muted); margin: 0; word-break: break-word; }
+  #page-board .ref-card a { display: block; margin-top: 2px; }
+
+  footer {
+    max-width: 760px; margin: 30px auto 0; padding: 0 16px 10px; font-size: 12px; color: var(--muted);
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+  }
+  .footer-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .reset-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    font-size: 12.5px; font-weight: 500; padding: 7px 14px; border-radius: 20px; cursor: pointer;
+    white-space: nowrap;
+  }
+  .reset-btn:hover { background: var(--surface-2); }
+  #exportBoard, #exportVault { color: var(--blue); border-color: var(--blue-soft); }
+  #importBoardBtn, #importVaultBtn { color: var(--green); border-color: var(--green-soft); }
+
+  #page-board section.group { margin-bottom: 36px; }
+  #page-board .group-label {
+    font-weight: 700; font-size: 12.5px; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 12px;
+  }
+
+  /* ===== Page 2: document folders (Google Drive folder-color style) ===== */
+  #page-vault .folder { margin-bottom: 28px; }
+  #page-vault .folder-tab {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--blue); color: #fff; font-weight: 500; font-size: 14px;
+    padding: 8px 16px; border-radius: 10px 10px 0 0; position: relative; top: 1px;
+  }
+  #page-vault .folder.tone-forest .folder-tab { background: var(--green); }
+  #page-vault .folder.tone-red .folder-tab { background: var(--red); }
+  #page-vault .folder.tone-yellow .folder-tab { background: var(--yellow); color: #202124; }
+  #page-vault .folder.tone-muted .folder-tab { background: var(--muted); }
+  #page-vault .folder-note { font-size: 12.5px; color: var(--muted); margin: 8px 0 10px; }
+  #page-vault .item-title-row { display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }
+  #page-vault .item-title { font-weight: 500; }
+
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { .progress-fill { transition: none; } }
+</style>
+</head>
+<body>
+
+<nav class="kit-nav">
+  <button class="kit-tab tab-board active" data-target="page-board">🛫 Departure Board</button>
+  <button class="kit-tab tab-vault" data-target="page-vault">📁 Document Vault</button>
+</nav>
+
+<!-- =======================================================
+     PAGE 1 — DEPARTURE BOARD
+     ======================================================= -->
+<div id="page-board" class="page active">
+
+  <header class="board">
+    <div class="board-top">
+      <div class="brand-row">
+        <!-- <img class="brand-logo" src="logo.png" alt="Company logo" onerror="this.style.display='none'"> -->
+        <div>
+          <p class="board-title display">EXIT DEPARTURE BOARD</p>
+          <p class="board-sub">Tech Mahindra · Last working day <strong style="color:var(--ink)">Wed, 16 Dec 2026</strong></p>
+        </div>
+      </div>
+      <div class="countdown">
+        <div class="num display" id="countdownNum">--</div>
+        <div class="lbl">days to LWD</div>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFillBoard"></div></div>
+      <div class="progress-text" id="progressTextBoard">0 of 0 tasks done</div>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="intro">
+      Everything below is pulled from your HR exit letter, laid out against your actual dates. Tap a box as you finish each task — it's saved on this device. The last section is just reference info (portals, paths, contacts), not tasks.
+    </div>
+
+    <div class="timeline" id="timeline">
+
+      <section class="group">
+        <div class="stop">
+          <div class="stop-head"><span class="date-badge">ONGOING</span></div>
+          <h2 class="stop-title display">Start now, finish before LWD</h2>
+          <p class="stop-note">No fixed date — but each one takes longer than expected, so don't leave them for the last week.</p>
+          <div class="card">
+            <div class="item" data-id="addr">
+              <input type="checkbox" id="addr">
+              <div class="item-body">
+                <p class="item-title">Update personal address &amp; personal email in Pace‑HR</p>
+                <p class="item-detail">Path: <code>ESS → Personal Information</code>. Every communication after your LWD — letters, Form‑16, FFS documents — goes to this email, so get it right.</p>
+              </div>
+            </div>
+            <div class="item" data-id="rm-lwd">
+              <input type="checkbox" id="rm-lwd">
+              <div class="item-body">
+                <p class="item-title">Confirm your LWD with your Reporting Manager</p>
+                <p class="item-detail">Check it under <code>ESS → Personal Information → Employee Separation Details</code>. Any change to the date needs mutual sign-off from both of you.</p>
+              </div>
+            </div>
+            <div class="item" data-id="roles-update">
+              <input type="checkbox" id="roles-update">
+              <div class="item-body">
+                <p class="item-title">Update your Roles &amp; Responsibilities in Pace‑HR</p>
+                <p class="item-detail">Do this before LWD, while you still have access.</p>
+              </div>
+            </div>
+            <div class="item" data-id="tax-proof">
+              <input type="checkbox" id="tax-proof">
+              <div class="item-body">
+                <p class="item-title">Upload tax‑saving declaration proofs</p>
+                <p class="item-detail"><code>EASY → PACE HR → ESS → Payroll &amp; Compensation → India Pay → Transaction → Tax Saving Declarations IND → Documents → Other Investments → Upload</code></p>
+              </div>
+            </div>
+            <div class="item" data-id="payslips">
+              <input type="checkbox" id="payslips">
+              <div class="item-body">
+                <p class="item-title">Download recent salary slips</p>
+                <p class="item-detail"><code>ESS → Payroll &amp; Compensation → India Pay → Report → View Pay Slips</code></p>
+              </div>
+            </div>
+            <div class="item" data-id="comp-letter">
+              <input type="checkbox" id="comp-letter">
+              <div class="item-body">
+                <p class="item-title">Download your Compensation Letter from Pace‑HR</p>
+              </div>
+            </div>
+            <div class="item" data-id="form16-old">
+              <input type="checkbox" id="form16-old">
+              <div class="item-body">
+                <p class="item-title">Download previous years' Form‑16</p>
+                <p class="item-detail"><code>ESS → Payroll &amp; Compensation → India Pay → Report → Form‑16</code>. This year's Form‑16 will be emailed to your personal address later, not available yet.</p>
+              </div>
+            </div>
+            <div class="item" data-id="timesheet-weekly">
+              <input type="checkbox" id="timesheet-weekly">
+              <div class="item-body">
+                <p class="item-title">Keep filling your timesheet every week</p>
+                <p class="item-detail">Miss at least one full week logged by the 20th of any month and that month's salary is held.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <div class="stop">
+          <div class="stop-head"><span class="date-badge">MON · 16 NOV 2026</span></div>
+          <h2 class="stop-title display">30 days before LWD</h2>
+          <p class="stop-note">The insurance porting window and flexi-claim deadline both land here — don't let these slip.</p>
+          <div class="card">
+            <div class="item" data-id="insurance-port">
+              <input type="checkbox" id="insurance-port">
+              <div class="item-body">
+                <p class="item-title">Decide on Group Medical Insurance porting</p>
+                <p class="item-detail">Your group cover ends on your LWD. To continue it as an individual policy, start the request at least 30 days out. Contact Nitin Govalkar — <code>nitin.govalkar@mahindrainsurancebrokers.com</code>, +91 88986 79585. TechM has no say over the insurer's terms, so read the policy details before accepting.</p>
+              </div>
+            </div>
+            <div class="item" data-id="flexi-claims">
+              <input type="checkbox" id="flexi-claims">
+              <div class="item-body">
+                <p class="item-title">Submit any other flexi‑component claims</p>
+                <p class="item-detail">These are due one month before LWD. Raise queries via <code>Helpnxt → Service Catalog → Ask HR → Claims (ERA)</code>.</p>
+              </div>
+            </div>
+            <div class="item" data-id="lta-decision">
+              <input type="checkbox" id="lta-decision">
+              <div class="item-body">
+                <p class="item-title">Decide on LTA</p>
+                <p class="item-detail">Submit bills now for a non‑taxable claim — only possible if you're on the old tax regime and declared LTA under flexi. Otherwise it pays out as taxable income in your FFS.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <div class="stop">
+          <div class="stop-head"><span class="date-badge">FRI · 20 NOV 2026</span></div>
+          <h2 class="stop-title display">November timesheet cut-off</h2>
+          <div class="card">
+            <div class="item" data-id="timesheet-nov">
+              <input type="checkbox" id="timesheet-nov">
+              <div class="item-body">
+                <p class="item-title">Log at least one full week for November</p>
+                <p class="item-detail">Missing this holds your November salary. Same rule would apply for December if it were a full month for you.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <div class="stop">
+          <div class="stop-head"><span class="date-badge">SUN · 6 DEC 2026</span></div>
+          <h2 class="stop-title display">10 days before LWD</h2>
+          <p class="stop-note">This is mostly HR's clock, not yours — but two things to watch for.</p>
+          <div class="card">
+            <div class="item" data-id="ral-watch">
+              <input type="checkbox" id="ral-watch">
+              <div class="item-body">
+                <p class="item-title">Watch for your Resignation Acceptance Letter (RAL)</p>
+                <p class="item-detail">Issued around now. Download it from <code>Pace‑HR → ESS → Personal Information → My Letters</code> before your access ends.</p>
+              </div>
+            </div>
+            <div class="item" data-id="spoc-notified">
+              <input type="checkbox" id="spoc-notified">
+              <div class="item-body">
+                <p class="item-title">Department clearance kicks off automatically</p>
+                <p class="item-detail">All department SPOCs get notified of your exit around this point. No action needed unless one of them reaches out to you directly.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <div class="stop urgent">
+          <div class="stop-head"><span class="date-badge" style="background:var(--red-soft); color:var(--red);">WED · 16 DEC 2026</span></div>
+          <h2 class="stop-title display">Last working day</h2>
+          <p class="stop-note">Everything here needs to be done today — access typically closes right after.</p>
+          <div class="card">
+            <div class="item" data-id="timesheet-final">
+              <input type="checkbox" id="timesheet-final">
+              <div class="item-body">
+                <p class="item-title">Complete your timesheet through today, including today</p>
+              </div>
+            </div>
+            <div class="item" data-id="return-laptop">
+              <input type="checkbox" id="return-laptop">
+              <div class="item-body">
+                <p class="item-title">Return your laptop and any client equipment</p>
+                <p class="item-detail">Follow the laptop return policy shared with your exit letter. Get a written acknowledgment of the return — anything not returned gets deducted from your FFS. For client-issued gear, coordinate with your RM or BHR.</p>
+              </div>
+            </div>
+            <div class="item" data-id="return-id">
+              <input type="checkbox" id="return-id">
+              <div class="item-body">
+                <p class="item-title">Return ID card, phone, data cards &amp; other assets</p>
+                <p class="item-detail">Not returning company or client equipment can lead to legal action under policy — don't let this one slide.</p>
+              </div>
+            </div>
+            <div class="item" data-id="final-check-email">
+              <input type="checkbox" id="final-check-email">
+              <div class="item-body">
+                <p class="item-title">Re-confirm your personal email &amp; address in Pace‑HR</p>
+                <p class="item-detail">This is your last chance to fix it before access closes.</p>
+              </div>
+            </div>
+            <div class="item" data-id="final-download-sweep">
+              <input type="checkbox" id="final-download-sweep">
+              <div class="item-body">
+                <p class="item-title">Final download sweep</p>
+                <p class="item-detail">Grab anything you haven't already: pay slips, compensation letter, Form‑16, RAL. Once you lose access, you're relying on the Re‑Member portal instead.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <div class="stop">
+          <div class="stop-head"><span class="date-badge">FROM THU · 17 DEC 2026</span></div>
+          <h2 class="stop-title display">Right after LWD</h2>
+          <div class="card">
+            <div class="item" data-id="remember-register">
+              <input type="checkbox" id="remember-register">
+              <div class="item-body">
+                <p class="item-title">Register on the Re‑Member portal</p>
+                <p class="item-detail">Go to <code>remember.techmahindra.com</code>, enter your Associate ID (GID), continue to registration, enter your date of joining, accept terms, then hit "Generate Password" — it's emailed to your personal address. All future queries after LWD go through this portal, not HR directly.</p>
+              </div>
+            </div>
+            <div class="item" data-id="ral-fallback">
+              <input type="checkbox" id="ral-fallback">
+              <div class="item-body">
+                <p class="item-title">Couldn't get your RAL before leaving? Check here</p>
+                <p class="item-detail">24 hours after LWD, look under <code>Re‑Member → Downloads → Personal Documents</code>. Still missing? Raise a ticket under "Letters/Documents Request."</p>
+              </div>
+            </div>
+            <div class="item" data-id="roles-letter">
+              <input type="checkbox" id="roles-letter">
+              <div class="item-body">
+                <p class="item-title">Need a Roles &amp; Responsibilities letter?</p>
+                <p class="item-detail">Draft the Word document with your job details yourself, get your previous manager's approval if you can, then raise a Re‑Member ticket. Business/Regional HR won't issue this directly.</p>
+              </div>
+            </div>
+            <div class="item" data-id="verification-heads-up">
+              <input type="checkbox" id="verification-heads-up">
+              <div class="item-body">
+                <p class="item-title">Tell your new employer how to verify your employment</p>
+                <p class="item-detail">They raise the request themselves at <code>exempverify.techmahindra.com</code> — it doesn't work as a request you make on your own behalf.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <div class="stop">
+          <div class="stop-head"><span class="date-badge">JAN – FEB 2027</span></div>
+          <h2 class="stop-title display">Money to track</h2>
+          <p class="stop-note">Full &amp; Final Settlement (FFS) takes 30–45 working days after LWD — roughly late January to mid‑February 2027. A few things are worth confirming rather than assuming.</p>
+          <div class="card">
+            <div class="item" data-id="salary-hold">
+              <input type="checkbox" id="salary-hold">
+              <div class="item-body">
+                <p class="item-title">Ask HR to confirm your December salary status <span class="flag verify">verify</span></p>
+                <p class="item-detail">The letter's wording on the "before 15th" hold rule is genuinely ambiguous for a mid‑month LWD like yours. Don't guess — ask your RM or HR directly whether December pay is held and released with your FFS.</p>
+              </div>
+            </div>
+            <div class="item" data-id="variable-pay">
+              <input type="checkbox" id="variable-pay">
+              <div class="item-body">
+                <p class="item-title">Check your Variable Pay eligibility <span class="flag verify">verify</span></p>
+                <p class="item-detail">Advance and Reconciled Variable Pay for the final month only pay out if LWD falls on the last calendar day of the month. Since 16 Dec isn't the last day of December, confirm whether you lose this payout entirely.</p>
+              </div>
+            </div>
+            <div class="item" data-id="gratuity">
+              <input type="checkbox" id="gratuity">
+              <div class="item-body">
+                <p class="item-title">Check your gratuity eligibility</p>
+                <p class="item-detail">Paid only with 4 years 10 months or more of continuous service. Work out your own tenure against this before expecting it in your FFS.</p>
+              </div>
+            </div>
+            <div class="item" data-id="ffs-watch">
+              <input type="checkbox" id="ffs-watch">
+              <div class="item-body">
+                <p class="item-title">Watch your personal inbox for FFS documents</p>
+                <p class="item-detail">Positive FFS → documents emailed to your personal address. Negative FFS → the TechM FFS recovery team emails you recovery details and the bank account to pay into. Your leave balance gets encashed as part of this too.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <div class="stop">
+          <div class="stop-head"><span class="date-badge">FROM TUE · 16 FEB 2027</span></div>
+          <h2 class="stop-title display">PF withdrawal or transfer</h2>
+          <p class="stop-note">Two months after LWD, once your final contribution has posted.</p>
+          <div class="card">
+            <div class="item" data-id="uan-active">
+              <input type="checkbox" id="uan-active">
+              <div class="item-body">
+                <p class="item-title">Confirm your UAN is active on the EPF portal</p>
+                <p class="item-detail">Do this first — nothing else works without it.</p>
+              </div>
+            </div>
+            <div class="item" data-id="pf-action">
+              <input type="checkbox" id="pf-action">
+              <div class="item-body">
+                <p class="item-title">File a PF withdrawal or transfer request</p>
+                <p class="item-detail">Log in at <code>unifiedportal-mem.epfindia.gov.in/memberinterface</code> with your UAN. Withdrawal: <code>Online Services → Claim (Form‑31, 19 &amp; 10C)</code>. Transferring to a new employer instead: <code>Online Services → One Member EPF Account Transfer Request</code>. Stuck? Raise a Re‑Member ticket under "TechM Provident Fund (PF)."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <section class="group">
+      <p class="group-label display">REFERENCE — PORTALS &amp; CONTACTS</p>
+      <div class="ref-grid">
+        <div class="ref-card">
+          <h4 class="display">Pace‑HR</h4>
+          <p>Your main self-service system while employed — separation details, payslips, letters, timesheets, tax proofs.</p>
+        </div>
+        <div class="ref-card">
+          <h4 class="display">Re‑Member portal</h4>
+          <p>Everything after LWD goes through here: letters, document requests, PF tickets.</p>
+          <a href="https://remember.techmahindra.com/loginpages/loginnew.aspx" target="_blank" rel="noopener">remember.techmahindra.com</a>
+        </div>
+        <div class="ref-card">
+          <h4 class="display">EPF India portal</h4>
+          <p>For UAN status, PF withdrawal and transfer requests.</p>
+          <a href="https://unifiedportal-mem.epfindia.gov.in/memberinterface/" target="_blank" rel="noopener">unifiedportal-mem.epfindia.gov.in</a>
+        </div>
+        <div class="ref-card">
+          <h4 class="display">Employment verification</h4>
+          <p>Your new employer raises the request here — not you.</p>
+          <a href="https://exempverify.techmahindra.com/UserList.aspx" target="_blank" rel="noopener">exempverify.techmahindra.com</a>
+        </div>
+        <div class="ref-card">
+          <h4 class="display">Helpnxt (claims)</h4>
+          <p>For claim queries before LWD: <code>Home → Service Catalog → Ask HR → Claims (ERA)</code></p>
+        </div>
+        <div class="ref-card">
+          <h4 class="display">Insurance porting contact</h4>
+          <p>Nitin Govalkar<br>nitin.govalkar@mahindrainsurancebrokers.com<br>+91 88986 79585</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span>Saved on this device. Export a backup to move it or open it elsewhere.</span>
+    <div class="footer-btns">
+      <button class="reset-btn" id="exportBoard">Export</button>
+      <button class="reset-btn" id="importBoardBtn">Import</button>
+      <input type="file" id="importBoardFile" accept="application/json" hidden>
+      <button class="reset-btn" id="resetBoard">Reset all</button>
+    </div>
+  </footer>
+
+</div>
+
+<!-- =======================================================
+     PAGE 2 — DOCUMENT VAULT
+     ======================================================= -->
+<div id="page-vault" class="page">
+
+  <header>
+    <div class="head-inner">
+      <div class="brand-row">
+        <img class="brand-logo" src="logo.png" alt="Company logo" onerror="this.style.display='none'">
+        <div>
+          <p class="eyebrow">Document Vault</p>
+          <h1 class="title display">Every paper you need before &amp; after LWD</h1>
+        </div>
+      </div>
+      <p class="subtitle">Tech Mahindra exit — organised by where each document comes from, so nothing gets missed once your access closes.</p>
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFillVault"></div></div>
+        <div class="progress-text" id="progressTextVault">0 of 0 collected</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="intro">
+      <strong>How to use this:</strong> work folder by folder. Anything tagged <span class="tag watch" style="vertical-align:middle;">watch</span> has a hard deadline or an access cutoff — do those first. Tap a box once you've actually got the document saved somewhere safe (not just seen it on screen).
+    </div>
+
+    <section class="folder tone-blue">
+      <div class="folder-tab">📁 Download from Pace‑HR — while you still have access</div>
+      <div class="folder-note">Everything in this folder disappears from your view once your login is deactivated. Get it all before LWD, not on LWD.</div>
+      <div class="card">
+        <div class="item" data-id="d-comp-letter">
+          <input type="checkbox" id="d-comp-letter">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Compensation Letter</p>
+              <span class="tag source">Pace‑HR</span>
+              <span class="tag watch">watch</span>
+            </div>
+            <p class="item-detail">Your current CTC breakup, in writing. Useful for loan applications, new-employer negotiations and your own records. Download directly from Pace‑HR before LWD — it isn't re-issued afterwards.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-payslips">
+          <input type="checkbox" id="d-payslips">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Salary slips — last 6–12 months</p>
+              <span class="tag source">Pace‑HR</span>
+            </div>
+            <p class="item-detail"><code>ESS → Payroll &amp; Compensation → India Pay → Report → View Pay Slips</code>. Grab more months than you think you'll need — loan, visa, and rental applications often ask for 3–6 months minimum.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-form16-prev">
+          <input type="checkbox" id="d-form16-prev">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Form‑16 — all previous years</p>
+              <span class="tag source">Pace‑HR</span>
+            </div>
+            <p class="item-detail"><code>ESS → Payroll &amp; Compensation → India Pay → Report → Form‑16</code>. Needed for tax filing and as income proof. Your current (final) year's Form‑16 is NOT here — see the "arrives by email" folder below.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-ral">
+          <input type="checkbox" id="d-ral">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Resignation Acceptance Letter (RAL)</p>
+              <span class="tag source">Pace‑HR</span>
+              <span class="tag timing">~10 days before LWD</span>
+            </div>
+            <p class="item-detail">Issued roughly 10 days before your LWD (around 6 Dec 2026). Download from <code>ESS → Personal Information → My Letters</code>. This is your formal proof of resignation being accepted — new employers sometimes ask for it during background checks.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-separation-details">
+          <input type="checkbox" id="d-separation-details">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Employee Separation Details (screenshot/printout)</p>
+              <span class="tag source">Pace‑HR</span>
+            </div>
+            <p class="item-detail"><code>ESS → Personal Information → Employee Separation Details</code>. Shows your official recorded LWD — worth a screenshot in case there's ever a dispute about the exact date later.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-roles-copy">
+          <input type="checkbox" id="d-roles-copy">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Your own copy of updated Roles &amp; Responsibilities</p>
+              <span class="tag source">Self</span>
+            </div>
+            <p class="item-detail">After you update this field in Pace‑HR, save a copy for yourself (screenshot or export). You'll reuse this text when drafting the separate Roles &amp; Responsibilities letter later.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-tax-proof-copy">
+          <input type="checkbox" id="d-tax-proof-copy">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Copies of tax-saving proofs you uploaded</p>
+              <span class="tag source">Self</span>
+            </div>
+            <p class="item-detail">Keep your own copies of whatever you upload under <code>Tax Saving Declarations IND → Documents → Other Investments</code> — useful for your own tax filing regardless of what TechM has on file.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="folder tone-forest">
+      <div class="folder-tab">📧 Arrives by personal email — after LWD</div>
+      <div class="folder-note">Make sure your personal email in Pace‑HR is correct — every one of these depends on it.</div>
+      <div class="card">
+        <div class="item" data-id="d-form16-current">
+          <input type="checkbox" id="d-form16-current">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Current year's Form‑16</p>
+              <span class="tag source">Email</span>
+            </div>
+            <p class="item-detail">Covers your final months' income (2026-27). Sent later, timed with year-end processing — not available at LWD. File it away for tax filing in mid-2027.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-ffs-positive">
+          <input type="checkbox" id="d-ffs-positive">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Full &amp; Final Settlement documents (if FFS is positive)</p>
+              <span class="tag source">Email</span>
+              <span class="tag timing">~30–45 working days after LWD</span>
+            </div>
+            <p class="item-detail">Includes your settlement breakup — leave encashment, any variable pay, deductions for unreturned assets, gratuity if eligible. Keep this; it's your proof of final dues cleared.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-ffs-negative">
+          <input type="checkbox" id="d-ffs-negative">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">FFS recovery notice (if FFS is negative)</p>
+              <span class="tag source">Email</span>
+              <span class="tag watch">watch</span>
+            </div>
+            <p class="item-detail">From the TechM FFS recovery team, with the bank account details for you to pay into. Read it carefully and keep proof of any payment you make against it.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-other-letters">
+          <input type="checkbox" id="d-other-letters">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Any other company letters</p>
+              <span class="tag source">Email</span>
+            </div>
+            <p class="item-detail">All letters after LWD are sent as soft copies to your personal email — nothing arrives on the old work ID. Keep a dedicated folder in your personal inbox for these.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="folder tone-red">
+      <div class="folder-tab">🎫 Request via Re‑Member portal</div>
+      <div class="folder-note">These don't arrive automatically — you have to ask. Register at <code>remember.techmahindra.com</code> first using your Associate ID (GID) and date of joining.</div>
+      <div class="card">
+        <div class="item" data-id="d-roles-letter">
+          <input type="checkbox" id="d-roles-letter">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Roles &amp; Responsibilities letter</p>
+              <span class="tag source">Re‑Member</span>
+            </div>
+            <p class="item-detail">Draft the Word document yourself with your job details (use your saved Pace‑HR copy as a base), get your previous manager's approval if you can reach them, then raise a ticket on Re‑Member. HR does not issue service or experience letters directly — this is the only route.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-ral-fallback">
+          <input type="checkbox" id="d-ral-fallback">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">RAL — if you missed downloading it before LWD</p>
+              <span class="tag source">Re‑Member</span>
+              <span class="tag timing">24 hrs after LWD</span>
+            </div>
+            <p class="item-detail">Check <code>Downloads → Personal Documents</code> 24 hours after your LWD. Still not there? Raise a ticket under "Letters/Documents Request."</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-general-doc-request">
+          <input type="checkbox" id="d-general-doc-request">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Any other missing letter or document</p>
+              <span class="tag source">Re‑Member</span>
+            </div>
+            <p class="item-detail">General catch-all: if something you expected doesn't show up anywhere else in this list, this is the ticket category to use.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="folder tone-yellow">
+      <div class="folder-tab">✍️ Proof you create yourself</div>
+      <div class="folder-note">Nobody hands these to you — you have to generate and save them as you go.</div>
+      <div class="card">
+        <div class="item" data-id="d-asset-receipt">
+          <input type="checkbox" id="d-asset-receipt">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Written acknowledgment of asset return</p>
+              <span class="tag source">Self</span>
+              <span class="tag watch">watch</span>
+            </div>
+            <p class="item-detail">When you hand back your laptop, ID card, phone, or data card, get a signed slip, stamped form, or even a confirmation email from whoever receives it. Without this, any dispute about whether you returned an asset falls on you — and unreturned assets get deducted from your FFS, or worse, invite legal action.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-lwd-confirmation">
+          <input type="checkbox" id="d-lwd-confirmation">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Email thread confirming your LWD with your RM</p>
+              <span class="tag source">Self</span>
+            </div>
+            <p class="item-detail">Since any change to LWD needs mutual consent, keep the email or chat where your RM confirms the final date in writing — not just a verbal okay.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-timesheet-proof">
+          <input type="checkbox" id="d-timesheet-proof">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Screenshot of completed timesheet through LWD</p>
+              <span class="tag source">Self</span>
+            </div>
+            <p class="item-detail">Take this right before your access closes on LWD — it's your evidence if there's ever a query about a salary hold.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-personal-files">
+          <input type="checkbox" id="d-personal-files">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Your own personal files off the company laptop</p>
+              <span class="tag source">Self</span>
+            </div>
+            <p class="item-detail">Back up anything personal (photos, personal documents) before handing the laptop back — only your own files, not company data or IP.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="folder tone-forest">
+      <div class="folder-tab">🏥 For insurance porting</div>
+      <div class="folder-note">Only relevant if you're porting your Group Medical Insurance into an individual policy.</div>
+      <div class="card">
+        <div class="item" data-id="d-gmi-details">
+          <input type="checkbox" id="d-gmi-details">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Your Group Medical Insurance enrolment details</p>
+              <span class="tag source">Self / HR</span>
+            </div>
+            <p class="item-detail">Confirm who's covered — yourself and any dependents — and note your policy/member number before reaching out to port it.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-porting-request">
+          <input type="checkbox" id="d-porting-request">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Porting request &amp; acknowledgment</p>
+              <span class="tag source">Insurer</span>
+              <span class="tag timing">30 days before LWD</span>
+            </div>
+            <p class="item-detail">Contact Nitin Govalkar (nitin.govalkar@mahindrainsurancebrokers.com, +91 88986 79585) to start the request, and save the insurer's acknowledgment that they've received it.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-new-policy">
+          <input type="checkbox" id="d-new-policy">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">The new individual policy document, once issued</p>
+              <span class="tag source">Insurer</span>
+            </div>
+            <p class="item-detail">Read the terms, exclusions, and premium carefully before accepting — TechM has no say over what the insurer offers or denies.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="folder tone-blue">
+      <div class="folder-tab">🏦 For PF — from 2 months after LWD</div>
+      <div class="card">
+        <div class="item" data-id="d-uan-status">
+          <input type="checkbox" id="d-uan-status">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">UAN number, confirmed active</p>
+              <span class="tag source">EPF portal</span>
+            </div>
+            <p class="item-detail">Log in at <code>unifiedportal-mem.epfindia.gov.in/memberinterface</code> and check status before doing anything else — nothing works without an active UAN.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-pf-passbook">
+          <input type="checkbox" id="d-pf-passbook">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">PF passbook / statement</p>
+              <span class="tag source">EPF portal</span>
+            </div>
+            <p class="item-detail">Download this before filing a withdrawal or transfer, so you have your own record of the balance you're claiming.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-pf-claim-form">
+          <input type="checkbox" id="d-pf-claim-form">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Filed claim — withdrawal (Form 31/19/10C) or transfer request</p>
+              <span class="tag source">EPF portal</span>
+              <span class="tag timing">from 2 months after LWD</span>
+            </div>
+            <p class="item-detail">Withdrawal: <code>Online Services → Claim (Form‑31, 19 &amp; 10C)</code>. Transfer to a new employer's PF: <code>Online Services → One Member EPF Account Transfer Request</code>. Save the acknowledgment/reference number either way.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="folder tone-muted">
+      <div class="folder-tab">💡 Worth doing anyway (not in the HR letter — general good practice)</div>
+      <div class="folder-note">These aren't mentioned in your exit instructions, but most people wish they'd done them before losing portal access.</div>
+      <div class="card">
+        <div class="item" data-id="d-gid-note">
+          <input type="checkbox" id="d-gid-note">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Note down your Associate ID (GID) somewhere safe</p>
+              <span class="tag source">General</span>
+            </div>
+            <p class="item-detail">You'll need it to register on Re‑Member and for any future verification queries — easy to forget once your work ID is deactivated.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-appraisal-letters">
+          <input type="checkbox" id="d-appraisal-letters">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Past appraisal / increment letters, if available in Pace‑HR</p>
+              <span class="tag source">General</span>
+            </div>
+            <p class="item-detail">Not guaranteed to be there, but worth a quick check under your letters section while you still have access.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-manager-contact">
+          <input type="checkbox" id="d-manager-contact">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">A personal contact number/email for your manager</p>
+              <span class="tag source">General</span>
+            </div>
+            <p class="item-detail">Useful if you need a reference or approval on your Roles &amp; Responsibilities letter after you've both moved on from official channels.</p>
+          </div>
+        </div>
+        <div class="item" data-id="d-bank-details-ready">
+          <input type="checkbox" id="d-bank-details-ready">
+          <div class="item-body">
+            <div class="item-title-row">
+              <p class="item-title">Your bank account details confirmed current in Pace‑HR</p>
+              <span class="tag source">General</span>
+            </div>
+            <p class="item-detail">Your FFS payout goes wherever is on file — worth double-checking this alongside your address and personal email.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span>Saved on this device. Export a backup to move it or open it elsewhere.</span>
+    <div class="footer-btns">
+      <button class="reset-btn" id="exportVault">Export</button>
+      <button class="reset-btn" id="importVaultBtn">Import</button>
+      <input type="file" id="importVaultFile" accept="application/json" hidden>
+      <button class="reset-btn" id="resetVault">Reset all</button>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+(function() {
+  // ---- Page switching ----
+  var tabs = document.querySelectorAll('.kit-tab');
+  var pages = document.querySelectorAll('.page');
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var target = tab.getAttribute('data-target');
+      tabs.forEach(function(t) { t.classList.toggle('active', t === tab); });
+      pages.forEach(function(p) { p.classList.toggle('active', p.id === target); });
+      window.scrollTo(0, 0);
+    });
+  });
+
+  // ---- Shared checklist helper (with export / import for static hosting) ----
+  function setupChecklist(rootId, storageKey, fillId, textId, textSuffix) {
+    var root = document.getElementById(rootId);
+
+    function loadState() {
+      try {
+        var raw = localStorage.getItem(storageKey);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) { return {}; }
+    }
+    function saveState(state) {
+      try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch (e) {}
+    }
+    function updateProgress() {
+      var boxes = root.querySelectorAll('.item input[type="checkbox"]');
+      var total = boxes.length, done = 0;
+      boxes.forEach(function(b) { if (b.checked) done++; });
+      var pct = total ? Math.round((done / total) * 100) : 0;
+      var fillEl = document.getElementById(fillId);
+      var textEl = document.getElementById(textId);
+      if (fillEl) fillEl.style.width = pct + '%';
+      if (textEl) textEl.textContent = done + ' of ' + total + ' ' + textSuffix;
+    }
+    function applyState(state) {
+      root.querySelectorAll('.item input[type="checkbox"]').forEach(function(box) {
+        var item = box.closest('.item');
+        var id = item.getAttribute('data-id');
+        var checked = !!state[id];
+        box.checked = checked;
+        item.classList.toggle('checked', checked);
+      });
+      updateProgress();
+    }
+
+    applyState(loadState());
+    root.querySelectorAll('.item input[type="checkbox"]').forEach(function(box) {
+      box.addEventListener('change', function() {
+        var item = box.closest('.item');
+        var id = item.getAttribute('data-id');
+        item.classList.toggle('checked', box.checked);
+        var st = loadState();
+        st[id] = box.checked;
+        saveState(st);
+        updateProgress();
+      });
+    });
+
+    return {
+      reset: function() {
+        try { localStorage.removeItem(storageKey); } catch (e) {}
+        applyState({});
+      },
+      exportState: function(filename) {
+        var state = loadState();
+        var payload = { key: storageKey, savedAt: new Date().toISOString(), state: state };
+        var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      },
+      importFromFile: function(file, cb) {
+        var reader = new FileReader();
+        reader.onload = function() {
+          try {
+            var parsed = JSON.parse(reader.result);
+            var state = (parsed && parsed.state) ? parsed.state : parsed;
+            if (typeof state !== 'object' || state === null) throw new Error('bad file');
+            saveState(state);
+            applyState(state);
+            cb(true);
+          } catch (e) {
+            cb(false);
+          }
+        };
+        reader.onerror = function() { cb(false); };
+        reader.readAsText(file);
+      }
+    };
+  }
+
+  var boardChecklist = setupChecklist('page-board', 'techm-exit-checklist-v1', 'progressFillBoard', 'progressTextBoard', 'tasks done');
+  var vaultChecklist = setupChecklist('page-vault', 'techm-doc-vault-v1', 'progressFillVault', 'progressTextVault', 'collected');
+
+  document.getElementById('resetBoard').addEventListener('click', function() {
+    if (confirm('Clear all checked items on the Departure Board?')) boardChecklist.reset();
+  });
+  document.getElementById('resetVault').addEventListener('click', function() {
+    if (confirm('Clear all checked items in the Document Vault?')) vaultChecklist.reset();
+  });
+
+  // ---- Export / Import (lets progress move between browsers or devices) ----
+  document.getElementById('exportBoard').addEventListener('click', function() {
+    boardChecklist.exportState('departure-board-progress.json');
+  });
+  document.getElementById('exportVault').addEventListener('click', function() {
+    vaultChecklist.exportState('document-vault-progress.json');
+  });
+
+  document.getElementById('importBoardBtn').addEventListener('click', function() {
+    document.getElementById('importBoardFile').click();
+  });
+  document.getElementById('importVaultBtn').addEventListener('click', function() {
+    document.getElementById('importVaultFile').click();
+  });
+  document.getElementById('importBoardFile').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    boardChecklist.importFromFile(file, function(ok) {
+      alert(ok ? 'Departure Board progress imported.' : 'Could not read that file — make sure it\'s a backup exported from this page.');
+      e.target.value = '';
+    });
+  });
+  document.getElementById('importVaultFile').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    vaultChecklist.importFromFile(file, function(ok) {
+      alert(ok ? 'Document Vault progress imported.' : 'Could not read that file — make sure it\'s a backup exported from this page.');
+      e.target.value = '';
+    });
+  });
+
+  // ---- Countdown (board page only) ----
+  var LWD = new Date(2026, 11, 16, 0, 0, 0);
+  function updateCountdown() {
+    var now = new Date();
+    var today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var diffDays = Math.round((LWD - today0) / (1000 * 60 * 60 * 24));
+    var el = document.getElementById('countdownNum');
+    var lblEl = document.querySelector('#page-board .countdown .lbl');
+    if (diffDays > 0) {
+      el.textContent = diffDays;
+      lblEl.textContent = 'days to LWD';
+    } else if (diffDays === 0) {
+      el.textContent = 'TODAY';
+      lblEl.textContent = 'is your LWD';
+    } else {
+      el.textContent = Math.abs(diffDays);
+      lblEl.textContent = 'days since LWD';
+    }
+  }
+  updateCountdown();
+})();
+</script>
+
+</body>
+</html>
